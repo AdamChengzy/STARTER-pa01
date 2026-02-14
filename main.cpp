@@ -27,21 +27,21 @@ int main(int argc, char* argv[]) {
   set<Card> aliceHand;
   set<Card> bobHand;
 
-  string tempCom;
+  string tempSuit;
   string tempValue;
 
 
-  while (inFile1 >> tempCom >> tempValue) 
+  while (inFile1 >> tempSuit >> tempValue) 
   {
-    Card c(tempCom[0], tempValue);
+    Card c(tempSuit[0], tempValue);
     aliceHand.insert(c);
   }
   inFile1.close();
 
 
-  while (inFile2 >> tempCom >> tempValue) 
+  while (inFile2 >> tempSuit >> tempValue) 
   {
-      Card c(tempCom[0], tempValue);
+      Card c(tempSuit[0], tempValue);
        bobHand.insert(c);
   }
   inFile2.close();
