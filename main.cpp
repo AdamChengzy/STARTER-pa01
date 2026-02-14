@@ -7,7 +7,7 @@
 using namespace std;
 
 int main(int argc, char* argv[]) {
-    string tempSuit;
+    string tempCom;
     string tempValue;
     bool gameOver = false;
 
@@ -27,13 +27,13 @@ int main(int argc, char* argv[]) {
     CardList aliceHand;
     CardList bobHand;
 
-    while (inFile1 >> tempSuit >> tempValue) {
-        aliceHand.insert(Card(tempSuit[0], tempValue));
+    while (inFile1 >> tempCom >> tempValue) {
+        aliceHand.insert(Card(tempCom[0], tempValue));
     }
     inFile1.close();
 
-    while (inFile2 >> tempSuit >> tempValue) {
-        bobHand.insert(Card(tempSuit[0], tempValue));
+    while (inFile2 >> tempCom >> tempValue) {
+        bobHand.insert(Card(tempCom[0], tempValue));
     }
     inFile2.close();
 
