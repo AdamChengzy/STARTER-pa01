@@ -216,5 +216,21 @@ void playGame(CardBST& alice, CardBST& bob) {
 void CardBST::printInOrder(ostream& os) const {
 }
 void playGame(CardBST& alice, CardBST& bob, ostream& os) {
+	while (true) {
+    bool found = false;
+
+    for (auto it = alice.begin(); it != alice.end(); ++it) {
+        if (bob.contains(*it)) {
+            os << "Alice picked matching card " << *it << endl;
+            bob.remove(*it);
+            alice.remove(*it);
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) break;
+}
+
 }
 
