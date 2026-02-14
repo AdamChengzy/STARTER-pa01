@@ -1,14 +1,16 @@
-// This file should implement the game using a custom implementation of a BST (based on your earlier BST implementation)
+// This file should implement the game using the std::set container class
+// Do not include card_list.h in this file
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <set>
 #include "card.h"
-#include "card_list.h"
 
 using namespace std;
 
 int main(int argc, char* argv[]) {
-  if (argc < 3) {
+  if (argc < 3) 
+  {
     cout << "Please provide 2 file names" << endl;
     return 1;
   }
@@ -16,16 +18,18 @@ int main(int argc, char* argv[]) {
   ifstream inFile1(argv[1]);
   ifstream inFile2(argv[2]);
 
-  if (inFile1.fail() || inFile2.fail()) {
+  if (inFile1.fail() || inFile2.fail()) 
+  {
     cout << "Could not open file " << argv[2] << endl;
     return 1;
   }
 
-  CardList aliceHand;
-  CardList bobHand;
+  set<Card> aliceHand;
+  set<Card> bobHand;
 
   string tempCom;
   string tempValue;
+
 
   while (inFile1 >> tempCom >> tempValue) 
   {
@@ -34,63 +38,65 @@ int main(int argc, char* argv[]) {
   }
   inFile1.close();
 
-  while (inFile2 >> tempCom >> tempValue)
+
+  while (inFile2 >> tempCom >> tempValue) 
   {
-    Card c(tempCom[0], tempValue);
-    bobHand.insert(c);
+      Card c(tempCom[0], tempValue);
+       bobHand.insert(c);
   }
   inFile2.close();
 
-  bool gameOver = false;
 
-  while (!gameOver) 
-  {
+  while (true) {
     bool aliceMatched = false;
     bool bobMatched = false;
 
-    for (CardList::Iterator it = aliceHand.begin(); it != aliceHand.end(); ++it) 
-    {
-      Card c = *it;
-      if (bobHand.contains(c)) 
+      for (set<Card>::iterator it = aliceHand.begin(); it != aliceHand.end(); ++it) 
       {
-        cout << "Alice picked matching card " << c << endl;
-        bobHand.remove(c);
-        aliceHand.remove(c);
-        aliceMatched = true;
-        break;
+        Card currentCard = *it;
+        if (bobHand.count(currentCard)) {
+          cout << "Alice picked matching card " << currentCard << endl;
+          bobHand.erase(currentCard);
+          aliceHand.erase(it); 
+                
+          aliceMatched = true;
+          break; 
+        }
       }
-    }
 
-    for (CardList::Iterator it = bobHand.rbegin(); it != bobHand.rend(); --it) 
-    {
-      Card c = *it;
-      if (aliceHand.contains(c)) 
+
+      for (set<Card>::reverse_iterator it = bobHand.rbegin(); it != bobHand.rend(); ++it) 
       {
-        cout << "Bob picked matching card " << c << endl;
-        aliceHand.remove(c);
-        bobHand.remove(c);
+        Card currentCard = *it;
+   
+        if (aliceHand.count(currentCard)) 
+        {
+        cout << "Bob picked matching card " << currentCard << endl;
+        aliceHand.erase(currentCard);
+        bobHand.erase(currentCard);
         bobMatched = true;
-        break;
+        break; 
+        }
       }
+
+
+        if (!aliceMatched && !bobMatched) 
+        {
+          break;
+        }
     }
 
-    if (!aliceMatched && !bobMatched) 
-    {
-      gameOver = true;
-    }
-  }
-
-  cout << endl << "Alice's cards:" << endl;
-  for (CardList::Iterator it = aliceHand.begin(); it != aliceHand.end(); ++it) 
+    cout << endl << "Alice's cards:" << endl;
+    for (set<Card>::iterator it = aliceHand.begin(); it != aliceHand.end(); ++it) 
     {
       cout << *it << endl;
     }
 
-  cout << endl << "Bob's cards:" << endl;
-  for (CardList::Iterator it = bobHand.begin(); it != bobHand.end(); ++it) 
-  {
-    cout << *it << endl;
-  }
+    cout << endl << "Bob's cards:" << endl;
+    for (set<Card>::iterator it = bobHand.begin(); it != bobHand.end(); ++it) 
+    {
+      cout << *it << endl;
+    }
 
-  return 0;
+    return 0;
 }
