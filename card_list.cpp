@@ -1,281 +1,143 @@
-// card_list.cpp
-// Author: Zhiyi Cheng
-// Implementation of the classes defined in card_list.h
-
 #include "card_list.h"
 #include <iostream>
 
-using namespace std;
-
-CardBST::CardBST() {
-    root = nullptr;
-}
-
-CardBST::~CardBST() {
-    clear(root);
-}
-
-void CardBST::clear(Node* n) {
-    if (!n) return;
-    clear(n->left);
-    clear(n->right);
-    delete n;
-}
-
-bool CardBST::insert(const Card& c) {
-    if (!root) {
-        root = new Node(c);
-        return true;
-    }
-
-    Node* cur = root;
-    Node* parent = nullptr;
-
-    while (cur) {
-        parent = cur;
-        if (c == cur->key) return false;
-        if (c < cur->key) cur = cur->left;
-        else cur = cur->right;
-    }
-
-    Node* n = new Node(c);
-    n->parent = parent;
-
-    if (c < parent->key) parent->left = n;
-    else parent->right = n;
-
-    return true;
-}
-
-bool CardBST::contains(const Card& c) const {
-    Node* cur = root;
-    while (cur) {
-        if (c == cur->key) return true;
-        if (c < cur->key) cur = cur->left;
-        else cur = cur->right;
-    }
-    return false;
-}
-
-CardBST::Node* CardBST::findNode(const Card& c) const {
-    Node* cur = root;
-    while (cur) {
-        if (c == cur->key) return cur;
-        if (c < cur->key) cur = cur->left;
-        else cur = cur->right;
+// Private helpers
+CardBST::Node* CardBST::find(const Card &c) const {
+    Node *n = root;
+    while(n) {
+        if(c == n->data) return n;
+        else if(c < n->data) n = n->left;
+        else n = n->right;
     }
     return nullptr;
 }
 
-CardBST::Node* CardBST::minimum(Node* n) const {
-    if (!n) return nullptr;
-    while (n->left) n = n->left;
+CardBST::Node* CardBST::minimum(Node *n) const {
+    while(n && n->left) n = n->left;
     return n;
 }
 
-CardBST::Node* CardBST::maximum(Node* n) const {
-    if (!n) return nullptr;
-    while (n->right) n = n->right;
+CardBST::Node* CardBST::maximum(Node *n) const {
+    while(n && n->right) n = n->right;
     return n;
 }
 
-CardBST::Node* CardBST::successor(Node* n) const {
-    if (!n) return nullptr;
-    if (n->right) return minimum(n->right);
-
-    Node* p = n->parent;
-    while (p && n == p->right) {
-        n = p;
-        p = p->parent;
-    }
+CardBST::Node* CardBST::successor(Node *n) const {
+    if(n->right) return minimum(n->right);
+    Node *p = n->parent;
+    while(p && n == p->right) { n = p; p = p->parent; }
     return p;
 }
 
-CardBST::Node* CardBST::predecessor(Node* n) const {
-    if (!n) return nullptr;
-    if (n->left) return maximum(n->left);
-
-    Node* p = n->parent;
-    while (p && n == p->left) {
-        n = p;
-        p = p->parent;
-    }
+CardBST::Node* CardBST::predecessor(Node *n) const {
+    if(n->left) return maximum(n->left);
+    Node *p = n->parent;
+    while(p && n == p->left) { n = p; p = p->parent; }
     return p;
 }
 
-void CardBST::transplant(Node* u, Node* v) {
-    if (!u->parent) root = v;
-    else if (u == u->parent->left) u->parent->left = v;
+void CardBST::transplant(Node *u, Node *v) {
+    if(u->parent == nullptr) root = v;
+    else if(u == u->parent->left) u->parent->left = v;
     else u->parent->right = v;
-
-    if (v) v->parent = u->parent;
+    if(v) v->parent = u->parent;
 }
 
-bool CardBST::remove(const Card& c) {
-    Node* n = findNode(c);
-    if (!n) return false;
-
-    if (!n->left && !n->right) {
-        transplant(n, nullptr);
-    }
-    else if (!n->left) {
-        transplant(n, n->right);
-    }
-    else if (!n->right) {
-        transplant(n, n->left);
-    }
-    else {
-        Node* s = minimum(n->right);
-        if (s->parent != n) {
-            transplant(s, s->right);
-            s->right = n->right;
-            if (s->right) s->right->parent = s;
-        }
-        transplant(n, s);
-        s->left = n->left;
-        if (s->left) s->left->parent = s;
-    }
-
+void CardBST::destroy(Node *n) {
+    if(!n) return;
+    destroy(n->left);
+    destroy(n->right);
     delete n;
-    return true;
 }
 
-CardBST::Iterator::Iterator(Node* n, const CardBST* t) {
-    node = n;
-    tree = t;
+// Public methods
+void CardBST::insert(const Card &c) {
+    Node *y = nullptr;
+    Node *x = root;
+    Node *z = new Node(c);
+    while(x) { y = x; x = (c < x->data) ? x->left : x->right; }
+    z->parent = y;
+    if(!y) root = z;
+    else if(c < y->data) y->left = z;
+    else y->right = z;
 }
 
-const Card& CardBST::Iterator::operator*() const {
-    return node->key;
+void CardBST::remove(const Card &c) {
+    Node *z = find(c);
+    if(!z) return;
+    if(!z->left) transplant(z, z->right);
+    else if(!z->right) transplant(z, z->left);
+    else {
+        Node *y = minimum(z->right);
+        if(y->parent != z) {
+            transplant(y, y->right);
+            y->right = z->right;
+            y->right->parent = y;
+        }
+        transplant(z, y);
+        y->left = z->left;
+        y->left->parent = y;
+    }
+    delete z;
 }
 
+bool CardBST::contains(const Card &c) const { return find(c) != nullptr; }
+
+void CardBST::print() const { inorderPrint(root); std::cout << std::endl; }
+
+void CardBST::inorderPrint(Node *n) const {
+    if(!n) return;
+    inorderPrint(n->left);
+    std::cout << n->data << std::endl;
+    inorderPrint(n->right);
+}
+
+// Iterator
 CardBST::Iterator& CardBST::Iterator::operator++() {
-    node = tree->successor(node);
+    current = tree->successor(current);
     return *this;
 }
 
 CardBST::Iterator& CardBST::Iterator::operator--() {
-    node = tree->predecessor(node);
+    if(!current) current = tree->maximum(tree->root);
+    else current = tree->predecessor(current);
     return *this;
 }
 
-bool CardBST::Iterator::operator!=(const Iterator& other) const {
-    return node != other.node;
-}
+CardBST::Iterator CardBST::begin() const { return Iterator(minimum(root), this); }
+CardBST::Iterator CardBST::end() const { return Iterator(nullptr, this); }
+CardBST::Iterator CardBST::rbegin() const { return Iterator(maximum(root), this); }
+CardBST::Iterator CardBST::rend() const { return Iterator(nullptr, this); }
 
-CardBST::Iterator CardBST::begin() const {
-    return Iterator(minimum(root), this);
-}
-
-CardBST::Iterator CardBST::end() const {
-    return Iterator(nullptr, this);
-}
-
-CardBST::Iterator CardBST::rbegin() const {
-    return Iterator(maximum(root), this);
-}
-
-CardBST::Iterator CardBST::rend() const {
-    return Iterator(nullptr, this);
-}
-
-void playGame(CardBST& alice, CardBST& bob) {
-    while (true) {
-
-        bool found = false;
-
-        for (auto it = alice.begin(); it != alice.end(); ++it) {
-            Card c = *it;
-            if (bob.contains(c)) {
-                cout << "Alice picked matching card " << c << endl;
-                alice.remove(c);
-                bob.remove(c);
-                found = true;
+// Game logic
+void playGame(CardBST &alice, CardBST &bob) {
+    bool matched = true;
+    while(matched) {
+        matched = false;
+        // Alice forward
+        for(auto it = alice.begin(); it != alice.end(); ++it) {
+            if(bob.contains(*it)) {
+                std::cout << "Alice picked matching card " << *it << std::endl;
+                bob.remove(*it);
+                alice.remove(*it);
+                matched = true;
                 break;
             }
         }
-
-        if (!found) break;
-
-        found = false;
-
-        for (auto it = bob.rbegin(); it != bob.rend(); --it) {
-            Card c = *it;
-            if (alice.contains(c)) {
-                cout << "Bob picked matching card " << c << endl;
-                bob.remove(c);
-                alice.remove(c);
-                found = true;
+        if(!matched) break;
+        // Bob reverse
+        for(auto it = bob.rbegin(); it != bob.rend(); --it) {
+            if(alice.contains(*it)) {
+                std::cout << "Bob picked matching card " << *it << std::endl;
+                alice.remove(*it);
+                bob.remove(*it);
+                matched = true;
                 break;
             }
         }
-
-        if (!found) break;
     }
+
+    std::cout << "\nAlice's cards:\n"; alice.print();
+    std::cout << "\nBob's cards:\n"; bob.print();
 }
-void CardBST::printInOrder(ostream& os) const {
-}
-void playGame(CardBST& alice, CardBST& bob, ostream& os) {
-	while (true) {
-        bool found = false;
-
-        // =========================
-        // Alice 回合：找最小匹配
-        // =========================
-        for (auto it = alice.begin(); it != alice.end(); ) {
-            if (bob.contains(*it)) {
-                os << "Alice picked matching card " << *it << std::endl;
-
-                Card c = *it;   // 保存要删除的值
-                ++it;           // 先移动迭代器，防止 erase 失效
-                alice.remove(c);
-                bob.remove(c);
-
-                found = true;
-                break;          // 一次只拿一张
-            } else {
-                ++it;
-            }
-        }
-
-        if (!found) break;    // Alice 没找到匹配，游戏结束
-
-        found = false;
-
-        // =========================
-        // Bob 回合：找最大匹配
-        // =========================
-        for (auto rit = bob.rbegin(); rit != bob.rend(); ) {
-            if (alice.contains(*rit)) {
-                os << "Bob picked matching card " << *rit << std::endl;
-
-                Card c = *rit;  // 保存要删除的值
-                ++rit;          // 先移动迭代器
-                bob.remove(c);
-                alice.remove(c);
-
-                found = true;
-                break;          // 一次只拿一张
-            } else {
-                ++rit;
-            }
-        }
-
-        if (!found) break;    // Bob 没找到匹配，游戏结束
-    }
-
-    // =========================
-    // 最终打印剩余手牌
-    // =========================
-    os << "Alice's cards:\n";
-    for (auto it = alice.begin(); it != alice.end(); ++it) {
-        os << *it << "\n";
-    }
-
-    os << "Bob's cards:\n";
-    for (auto it = bob.begin(); it != bob.end(); ++it) {
-        os << *it << "\n";
-    }
-}
-
 
