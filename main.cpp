@@ -23,18 +23,32 @@ int main(int argv, char** argc){
     return 1;
   }
 
-  //Read each file
-  while (getline (cardFile1, line) && (line.length() > 0)){
+  CardBST alice;
+  CardBST bob;
 
-  }
-  cardFile1.close();
+  char s;
+string v;
+
+while (cardFile1 >> s >> v) {
+    alice.insert(Card(
+        Card::suitFromChar(s),
+        Card::valueFromToken(v)
+    ));
+}
+
+while (cardFile2 >> s >> v) {
+    bob.insert(Card(
+        Card::suitFromChar(s),
+        Card::valueFromToken(v)
+    ));
+}
+  playGame(alice, bob, cout);
 
 
-  while (getline (cardFile2, line) && (line.length() > 0)){
-
-  }
-  cardFile2.close();
-  
+ cout << "\nAlice's cards:\n";
+  alice.printInOrder(cout);
+  cout << "\nBob's cards:\n";
+  bob.printInOrder(cout);
   
   return 0;
 }
