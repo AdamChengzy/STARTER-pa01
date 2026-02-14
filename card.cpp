@@ -67,3 +67,7 @@ std::ostream& operator<<(std::ostream& os, const Card& c) {
     os << suitChar << " " << Card::valueToToken(c.value());
     return os;
 }
+std::string Card::valueToToken(int v) {
+    return std::to_string(v);
+}
+

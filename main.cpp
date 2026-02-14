@@ -42,13 +42,12 @@ while (cardFile2 >> s >> v) {
         Card::valueFromToken(v)
     ));
 }
-  playGame(alice, bob, cout);
 
 
  cout << "\nAlice's cards:\n";
   alice.printInOrder(cout);
   cout << "\nBob's cards:\n";
-  bob.printInOrder(cout);
-  
+  bob.printInOrder(cout);  
+  playGame(alice, bob, cout);
   return 0;
 }
