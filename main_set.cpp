@@ -1,59 +1,87 @@
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <set>
 #include "card.h"
 
-void playSetGame(std::set<Card> &alice, std::set<Card> &bob) {
-    bool matched = true;
-    while(matched) {
-        matched = false;
-        // Alice forward
-        for(auto it = alice.begin(); it != alice.end(); ++it) {
-            if(bob.find(*it) != bob.end()) {
-                std::cout << "Alice picked matching card " << *it << std::endl;
-                bob.erase(*it);
-                alice.erase(it);
-                matched = true;
-                break;
-            }
-        }
-        if(!matched) break;
-        // Bob reverse
-        for(auto it = bob.rbegin(); it != bob.rend(); ++it) {
-            if(alice.find(*it) != alice.end()) {
-                std::cout << "Bob picked matching card " << *it << std::endl;
-                alice.erase(*it);
-                bob.erase(std::next(it).base()); // erase with reverse iterator
-                matched = true;
-                break;
-            }
-        }
-    }
+using namespace std;
 
-    std::cout << "\nAlice's cards:\n";
-    for(const auto &c: alice) std::cout << c << std::endl;
+int main(int argc, char* argv[]) {
+    bool bobMatched = false;
+    bool aliceMatched = false;
+    string tempCom;
+    string tempValue;
 
-    std::cout << "\nBob's cards:\n";
-    for(const auto &c: bob) std::cout << c << std::endl;
-}
-
-int main(int argc, char *argv[]) {
-    if(argc < 3) {
-        std::cerr << "Provide two files!" << std::endl;
-        return 1;
-    }
-    std::ifstream fa(argv[1]), fb(argv[2]);
-    if(!fa || !fb) {
-        std::cerr << "Cannot open files" << std::endl;
+    if (argc < 3) {
+        cout << "Please provide 2 file names" << endl;
         return 1;
     }
 
-    std::set<Card> alice, bob;
-    char s; std::string v;
-    while(fa >> s >> v) alice.insert(Card(s,v));
-    while(fb >> s >> v) bob.insert(Card(s,v));
+    set<Card> aliceHand;
+    set<Card> bobHand;
 
-    playSetGame(alice, bob);
+    ifstream inFile1(argv[1]);
+    ifstream inFile2(argv[2]);
+
+    if (inFile1.fail() || inFile2.fail()) {
+        cout << "Could not open file " << argv[2] << endl;
+        return 1;
+    }
+
+    while (inFile2 >> tempCom >> tempValue) {
+        Card c(tempCom[0], tempValue);
+        bobHand.insert(c);
+    }
+    inFile2.close();
+
+    while (inFile1 >> tempCom >> tempValue) {
+        Card c(tempCom[0], tempValue);
+        aliceHand.insert(c);
+    }
+    inFile1.close();
+
+    while (true) {
+        aliceMatched = false;
+        bobMatched = false;
+
+        for (set<Card>::reverse_iterator it = bobHand.rbegin(); it != bobHand.rend(); ++it) {
+            Card currentCard = *it;
+
+            if (aliceHand.count(currentCard)) {
+                cout << "Bob picked matching card " << currentCard << endl;
+                aliceHand.erase(currentCard);
+                bobHand.erase(currentCard);
+                bobMatched = true;
+                break;
+            }
+        }
+
+        for (set<Card>::iterator it = aliceHand.begin(); it != aliceHand.end(); ++it) {
+            Card currentCard = *it;
+            if (bobHand.count(currentCard)) {
+                cout << "Alice picked matching card " << currentCard << endl;
+                bobHand.erase(currentCard);
+                aliceHand.erase(it);
+                aliceMatched = true;
+                break;
+            }
+        }
+
+        if (!aliceMatched && !bobMatched) {
+            break;
+        }
+    }
+
+    cout << endl << "Bob's cards:" << endl;
+    for (set<Card>::iterator it = bobHand.begin(); it != bobHand.end(); ++it) {
+        cout << *it << endl;
+    }
+
+    cout << endl << "Alice's cards:" << endl;
+    for (set<Card>::iterator it = aliceHand.begin(); it != aliceHand.end(); ++it) {
+        cout << *it << endl;
+    }
+
     return 0;
 }
 

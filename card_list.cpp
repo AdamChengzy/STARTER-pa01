@@ -1,143 +1,221 @@
+// card_list.cpp
+// Author: Zhiyi Cheng
+// Implementation of the classes defined in card_list.h
+
 #include "card_list.h"
-#include <iostream>
 
-// Private helpers
-CardBST::Node* CardBST::find(const Card &c) const {
-    Node *n = root;
-    while(n) {
-        if(c == n->data) return n;
-        else if(c < n->data) n = n->left;
-        else n = n->right;
+// Iterator 运算符
+bool CardList::Iterator::operator==(const Iterator& other) const {
+    return curr == other.curr;
+}
+
+bool CardList::Iterator::operator!=(const Iterator& other) const {
+    return curr != other.curr;
+}
+
+Card CardList::Iterator::operator*() const {
+    return curr->info;
+}
+
+CardList::Iterator& CardList::Iterator::operator++() {
+    if (curr == nullptr) return *this;
+
+    if (curr->right != nullptr) {
+        curr = curr->right;
+        while (curr->left != nullptr) curr = curr->left;
+    } else {
+        Node* p = curr->parent;
+        while (p != nullptr && curr == p->right) {
+            curr = p;
+            p = p->parent;
+        }
+        curr = p;
     }
-    return nullptr;
+    return *this;
 }
 
-CardBST::Node* CardBST::minimum(Node *n) const {
-    while(n && n->left) n = n->left;
-    return n;
+CardList::Iterator& CardList::Iterator::operator--() {
+    if (curr == nullptr) return *this;
+
+    if (curr->left != nullptr) {
+        curr = curr->left;
+        while (curr->right != nullptr) curr = curr->right;
+    } else {
+        Node* p = curr->parent;
+        while (p != nullptr && curr == p->left) {
+            curr = p;
+            p = p->parent;
+        }
+        curr = p;
+    }
+    return *this;
 }
 
-CardBST::Node* CardBST::maximum(Node *n) const {
-    while(n && n->right) n = n->right;
-    return n;
+CardList::Iterator::Iterator(Node* n) {
+    curr = n;
+}
+CardList::CardList() {
+    root = nullptr;
 }
 
-CardBST::Node* CardBST::successor(Node *n) const {
-    if(n->right) return minimum(n->right);
-    Node *p = n->parent;
-    while(p && n == p->right) { n = p; p = p->parent; }
-    return p;
+CardList::~CardList() {
+    clear(root);
 }
 
-CardBST::Node* CardBST::predecessor(Node *n) const {
-    if(n->left) return maximum(n->left);
-    Node *p = n->parent;
-    while(p && n == p->left) { n = p; p = p->parent; }
-    return p;
+void CardList::clear(Node* n) {
+    if (n != nullptr) {
+        clear(n->left);
+        clear(n->right);
+        delete n;
+    }
 }
 
-void CardBST::transplant(Node *u, Node *v) {
-    if(u->parent == nullptr) root = v;
-    else if(u == u->parent->left) u->parent->left = v;
-    else u->parent->right = v;
-    if(v) v->parent = u->parent;
+void CardList::insert(Card c) {
+    if (root == nullptr) {
+        root = new Node(c);
+        return;
+    }
+
+    Node* curr = root;
+    Node* prev = nullptr;
+
+    while (curr != nullptr) {
+        prev = curr;
+        if (c < curr->info) {
+            curr = curr->left;
+        } else if (c > curr->info) {
+            curr = curr->right;
+        } else {
+            return;
+        }
+    }
+
+    Node* newNode = new Node(c);
+    newNode->parent = prev; 
+
+    if (c < prev->info) {
+        prev->left = newNode;
+    } else {
+        prev->right = newNode;
+    }
 }
 
-void CardBST::destroy(Node *n) {
-    if(!n) return;
-    destroy(n->left);
-    destroy(n->right);
-    delete n;
+bool CardList::contains(Card c) const {
+    Node* curr = root;
+    while (curr != nullptr) {
+        if (c == curr->info) {
+            return true;
+        }
+        if (c < curr->info) {
+            curr = curr->left;
+        } else {
+            curr = curr->right;
+        }
+    }
+    return false;
 }
 
-// Public methods
-void CardBST::insert(const Card &c) {
-    Node *y = nullptr;
-    Node *x = root;
-    Node *z = new Node(c);
-    while(x) { y = x; x = (c < x->data) ? x->left : x->right; }
-    z->parent = y;
-    if(!y) root = z;
-    else if(c < y->data) y->left = z;
-    else y->right = z;
-}
+void CardList::remove(Card c) {
+    if (root == nullptr) return;
 
-void CardBST::remove(const Card &c) {
-    Node *z = find(c);
-    if(!z) return;
-    if(!z->left) transplant(z, z->right);
-    else if(!z->right) transplant(z, z->left);
+    Node* curr = root;
+    while (curr != nullptr) {
+        if (c == curr->info) break;
+        if (c < curr->info) curr = curr->left;
+        else curr = curr->right;
+    }
+
+    if (curr == nullptr) return; 
+
+    if (curr->left == nullptr && curr->right == nullptr) {
+        if (curr == root) {
+            root = nullptr;
+        } else {
+            if (curr->parent->left == curr) curr->parent->left = nullptr;
+            else curr->parent->right = nullptr;
+        }
+        delete curr;
+    }
+    else if (curr->left != nullptr && curr->right != nullptr) {
+        Node* succ = getMin(curr->right);
+        Card succData = succ->info;
+        
+        remove(succData);
+        curr->info = succData;
+    }
     else {
-        Node *y = minimum(z->right);
-        if(y->parent != z) {
-            transplant(y, y->right);
-            y->right = z->right;
-            y->right->parent = y;
+        Node* child = (curr->left != nullptr) ? curr->left : curr->right;
+        
+        if (curr == root) {
+            root = child;
+            child->parent = nullptr;
+        } else {
+            if (curr->parent->left == curr) curr->parent->left = child;
+            else curr->parent->right = child;
+            child->parent = curr->parent;
         }
-        transplant(z, y);
-        y->left = z->left;
-        y->left->parent = y;
+        delete curr;
     }
-    delete z;
 }
 
-bool CardBST::contains(const Card &c) const { return find(c) != nullptr; }
 
-void CardBST::print() const { inorderPrint(root); std::cout << std::endl; }
-
-void CardBST::inorderPrint(Node *n) const {
-    if(!n) return;
-    inorderPrint(n->left);
-    std::cout << n->data << std::endl;
-    inorderPrint(n->right);
+CardList::Node* CardList::getMax(Node* n) const {
+    if (n == nullptr) return nullptr;
+    while (n->right != nullptr) {
+        n = n->right;
+    }
+    return n;
 }
 
-// Iterator
-CardBST::Iterator& CardBST::Iterator::operator++() {
-    current = tree->successor(current);
-    return *this;
+CardList::Node* CardList::getMin(Node* n) const {
+    if (n == nullptr) return nullptr;
+    while (n->left != nullptr) {
+        n = n->left;
+    }
+    return n;
 }
 
-CardBST::Iterator& CardBST::Iterator::operator--() {
-    if(!current) current = tree->maximum(tree->root);
-    else current = tree->predecessor(current);
-    return *this;
-}
+CardList::Node* CardList::getSuccessor(Node* n) const {
+    if (n == nullptr) return nullptr;
 
-CardBST::Iterator CardBST::begin() const { return Iterator(minimum(root), this); }
-CardBST::Iterator CardBST::end() const { return Iterator(nullptr, this); }
-CardBST::Iterator CardBST::rbegin() const { return Iterator(maximum(root), this); }
-CardBST::Iterator CardBST::rend() const { return Iterator(nullptr, this); }
-
-// Game logic
-void playGame(CardBST &alice, CardBST &bob) {
-    bool matched = true;
-    while(matched) {
-        matched = false;
-        // Alice forward
-        for(auto it = alice.begin(); it != alice.end(); ++it) {
-            if(bob.contains(*it)) {
-                std::cout << "Alice picked matching card " << *it << std::endl;
-                bob.remove(*it);
-                alice.remove(*it);
-                matched = true;
-                break;
-            }
-        }
-        if(!matched) break;
-        // Bob reverse
-        for(auto it = bob.rbegin(); it != bob.rend(); --it) {
-            if(alice.contains(*it)) {
-                std::cout << "Bob picked matching card " << *it << std::endl;
-                alice.remove(*it);
-                bob.remove(*it);
-                matched = true;
-                break;
-            }
-        }
+    if (n->right != nullptr) {
+        return getMin(n->right);
     }
 
-    std::cout << "\nAlice's cards:\n"; alice.print();
-    std::cout << "\nBob's cards:\n"; bob.print();
+    Node* p = n->parent;
+    while (p != nullptr && n == p->right) {
+        n = p;
+        p = p->parent;
+    }
+    return p;
+}
+
+CardList::Node* CardList::getPredecessor(Node* n) const {
+    if (n == nullptr) return nullptr;
+    if (n->left != nullptr) {
+        return getMax(n->left);
+    }
+    Node* p = n->parent;
+    while (p != nullptr && n == p->left) {
+        n = p;
+        p = p->parent;
+    }
+    return p;
+}
+
+CardList::Iterator CardList::begin() const {
+    return Iterator(getMin(root));
+}
+
+CardList::Iterator CardList::end() const {
+    return Iterator(nullptr);
+}
+
+CardList::Iterator CardList::rbegin() const {
+    return Iterator(getMax(root));
+}
+
+CardList::Iterator CardList::rend() const {
+    return Iterator(nullptr);
 }
 

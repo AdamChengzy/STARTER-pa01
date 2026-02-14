@@ -1,44 +1,77 @@
+// card.cpp
+// Author: Zhiyi Cheng
+// Implementation of the classes defined in card.h
+
 #include "card.h"
 
-// Helper arrays to order suits and values
-static const std::string suits = "cdsh"; // clubs, diamonds, spades, hearts
-static const std::string values = "a234567891jqk"; // '10' handled separately
+bool Card::operator<(const Card& other) const {
 
-int suitOrder(char s) {
-    switch(s) {
-        case 'c': return 0;
-        case 'd': return 1;
-        case 's': return 2;
-        case 'h': return 3;
+    if (getComRank() != other.getComRank()) {
+        return getComRank() < other.getComRank();
     }
-    return -1;
+    return value < other.value;
 }
 
-int valueOrder(const std::string &v) {
-    if(v == "a") return 0;
-    if(v == "j") return 11;
-    if(v == "q") return 12;
-    if(v == "k") return 13;
-    if(v == "10") return 10;
-    return std::stoi(v);
+bool Card::operator>(const Card& other) const {
+    return other < *this; 
 }
 
-bool Card::operator==(const Card &other) const {
-    return suit == other.suit && value == other.value;
+bool Card::operator==(const Card& other) const {
+    return (com == other.com) && (value == other.value);
 }
 
-bool Card::operator<(const Card &other) const {
-    if(suitOrder(suit) != suitOrder(other.suit))
-        return suitOrder(suit) < suitOrder(other.suit);
-    return valueOrder(value) < valueOrder(other.value);
+bool Card::operator!=(const Card& other) const {
+    return !(*this == other);
 }
 
-bool Card::operator>(const Card &other) const {
-    return other < *this;
-}
+ostream& operator<<(ostream& os, const Card& c) {
+    os << c.com << " "; 
 
-std::ostream& operator<<(std::ostream &os, const Card &c) {
-    os << c.suit << " " << c.value;
+    if (c.value == 1) os << "a";
+    else if (c.value == 11) os << "j";
+    else if (c.value == 12) os << "q";
+    else if (c.value == 13) os << "k";
+    else os << c.value;
     return os;
+}
+
+char Card::getCom() const {
+    return com;
+}
+
+int Card::getComRank() const {
+    if (com == 'c') return 1;
+    if (com == 'd') return 2;
+    if (com == 's') return 3;
+    if (com == 'h') return 4;
+    return 0;
+}
+
+int Card::getValue() const {
+    return value;
+}
+
+Card::Card() {
+    com = 'c';
+    value = 0;
+}
+
+Card::Card(char c, string v) {
+    com = c;
+    if (v == "a") {
+        value = 1;
+    }
+    else if (v == "j") {
+        value = 11;
+    }
+    else if (v == "q") {
+        value = 12;
+    }
+    else if (v == "k") {
+        value = 13;
+    }
+    else {
+        value = stoi(v);
+    }
 }
 
