@@ -217,20 +217,65 @@ void CardBST::printInOrder(ostream& os) const {
 }
 void playGame(CardBST& alice, CardBST& bob, ostream& os) {
 	while (true) {
-    bool found = false;
+        bool found = false;
 
-    for (auto it = alice.begin(); it != alice.end(); ++it) {
-        if (bob.contains(*it)) {
-            os << "Alice picked matching card " << *it << endl;
-            bob.remove(*it);
-            alice.remove(*it);
-            found = true;
-            break;
+        // =========================
+        // Alice 回合：找最小匹配
+        // =========================
+        for (auto it = alice.begin(); it != alice.end(); ) {
+            if (bob.contains(*it)) {
+                os << "Alice picked matching card " << *it << std::endl;
+
+                Card c = *it;   // 保存要删除的值
+                ++it;           // 先移动迭代器，防止 erase 失效
+                alice.remove(c);
+                bob.remove(c);
+
+                found = true;
+                break;          // 一次只拿一张
+            } else {
+                ++it;
+            }
         }
+
+        if (!found) break;    // Alice 没找到匹配，游戏结束
+
+        found = false;
+
+        // =========================
+        // Bob 回合：找最大匹配
+        // =========================
+        for (auto rit = bob.rbegin(); rit != bob.rend(); ) {
+            if (alice.contains(*rit)) {
+                os << "Bob picked matching card " << *rit << std::endl;
+
+                Card c = *rit;  // 保存要删除的值
+                ++rit;          // 先移动迭代器
+                bob.remove(c);
+                alice.remove(c);
+
+                found = true;
+                break;          // 一次只拿一张
+            } else {
+                ++rit;
+            }
+        }
+
+        if (!found) break;    // Bob 没找到匹配，游戏结束
     }
 
-    if (!found) break;
+    // =========================
+    // 最终打印剩余手牌
+    // =========================
+    os << "Alice's cards:\n";
+    for (auto it = alice.begin(); it != alice.end(); ++it) {
+        os << *it << "\n";
+    }
+
+    os << "Bob's cards:\n";
+    for (auto it = bob.begin(); it != bob.end(); ++it) {
+        os << *it << "\n";
+    }
 }
 
-}
 
